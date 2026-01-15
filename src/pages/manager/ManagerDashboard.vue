@@ -10,7 +10,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import InputText from 'primevue/inputtext'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 import { supabase } from '@/services/supabase'
 
@@ -332,7 +332,7 @@ async function createReservation() {
         </div>
         <div class="flex flex-col gap-2">
           <label class="font-medium">Thời gian đặt</label>
-          <Calendar v-model="reservationForm.reservation_time" showTime hourFormat="24" class="w-full" />
+          <DatePicker v-model="reservationForm.reservation_time" showTime hourFormat="24" class="w-full" />
         </div>
         <div class="flex flex-col gap-2">
           <label class="font-medium">Số khách</label>

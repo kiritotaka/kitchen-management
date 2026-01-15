@@ -4,7 +4,7 @@ import { useToast } from 'primevue/usetoast'
 import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
 import { supabase } from '@/services/supabase'
@@ -157,7 +157,7 @@ function formatPrice(price: number) {
     <div class="flex flex-wrap gap-4 mb-6 bg-white p-4 rounded-lg shadow">
       <div class="flex flex-col gap-2">
         <label class="font-medium text-sm">Khoảng thời gian</label>
-        <Calendar v-model="dateRange" selectionMode="range" dateFormat="dd/mm/yy" showIcon class="w-64" />
+        <DatePicker v-model="dateRange" selectionMode="range" dateFormat="dd/mm/yy" showIcon class="w-64" />
       </div>
       <div class="flex flex-col gap-2">
         <label class="font-medium text-sm">Xem theo</label>

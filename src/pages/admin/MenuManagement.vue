@@ -14,7 +14,10 @@ import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
 import InputSwitch from 'primevue/inputswitch'
 import Tag from 'primevue/tag'
-import TabView from 'primevue/tabview'
+import Tabs from 'primevue/tabs'
+import TabList from 'primevue/tablist'
+import Tab from 'primevue/tab'
+import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import FileUpload from 'primevue/fileupload'
 import { supabase } from '@/services/supabase'
@@ -261,76 +264,82 @@ async function deleteCategory(category: Category) {
       </div>
     </div>
 
-    <TabView>
-      <TabPanel header="Món ăn">
-        <div class="mb-4">
-          <Button label="Thêm món mới" icon="pi pi-plus" @click="openAddItem" />
-        </div>
+    <Tabs value="0">
+      <TabList>
+        <Tab value="0">Món ăn</Tab>
+        <Tab value="1">Danh mục</Tab>
+      </TabList>
+      <TabPanels>
+        <TabPanel value="0">
+          <div class="mb-4 mt-4">
+            <Button label="Thêm món mới" icon="pi pi-plus" @click="openAddItem" />
+          </div>
 
-        <DataTable :value="menuStore.menuItems" :loading="menuStore.loading" paginator :rows="10" stripedRows>
-          <Column header="Hình" style="width: 80px">
-            <template #body="{ data }">
-              <img 
-                :src="data.image_url || 'https://placehold.co/60x60/f97316/white?text=M'" 
-                class="w-12 h-12 rounded object-cover"
-              />
-            </template>
-          </Column>
-          <Column field="name" header="Tên món" sortable />
-          <Column header="Danh mục" sortable>
-            <template #body="{ data }">
-              <Tag v-if="data.category" :value="data.category.name" />
-              <span v-else class="text-gray-400">-</span>
-            </template>
-          </Column>
-          <Column header="Giá" sortable>
-            <template #body="{ data }">
-              {{ formatPrice(data.price) }}
-            </template>
-          </Column>
-          <Column header="Trạng thái">
-            <template #body="{ data }">
-              <Tag :value="data.is_available ? 'Còn hàng' : 'Hết hàng'" :severity="data.is_available ? 'success' : 'danger'" />
-            </template>
-          </Column>
-          <Column header="Badges">
-            <template #body="{ data }">
-              <div class="flex gap-1">
-                <Tag v-for="badge in data.badges || []" :key="badge" :value="badge" severity="info" />
-              </div>
-            </template>
-          </Column>
-          <Column header="Thao tác" style="width: 150px">
-            <template #body="{ data }">
-              <div class="flex gap-1">
-                <Button icon="pi pi-pencil" severity="info" size="small" text @click="openEditItem(data)" />
-                <Button icon="pi pi-trash" severity="danger" size="small" text @click="confirmDeleteItem(data)" />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </TabPanel>
+          <DataTable :value="menuStore.menuItems" :loading="menuStore.loading" paginator :rows="10" stripedRows>
+            <Column header="Hình" style="width: 80px">
+              <template #body="{ data }">
+                <img 
+                  :src="data.image_url || 'https://placehold.co/60x60/f97316/white?text=M'" 
+                  class="w-12 h-12 rounded object-cover"
+                />
+              </template>
+            </Column>
+            <Column field="name" header="Tên món" sortable />
+            <Column header="Danh mục" sortable>
+              <template #body="{ data }">
+                <Tag v-if="data.category" :value="data.category.name" />
+                <span v-else class="text-gray-400">-</span>
+              </template>
+            </Column>
+            <Column header="Giá" sortable>
+              <template #body="{ data }">
+                {{ formatPrice(data.price) }}
+              </template>
+            </Column>
+            <Column header="Trạng thái">
+              <template #body="{ data }">
+                <Tag :value="data.is_available ? 'Còn hàng' : 'Hết hàng'" :severity="data.is_available ? 'success' : 'danger'" />
+              </template>
+            </Column>
+            <Column header="Badges">
+              <template #body="{ data }">
+                <div class="flex gap-1">
+                  <Tag v-for="badge in data.badges || []" :key="badge" :value="badge" severity="info" />
+                </div>
+              </template>
+            </Column>
+            <Column header="Thao tác" style="width: 150px">
+              <template #body="{ data }">
+                <div class="flex gap-1">
+                  <Button icon="pi pi-pencil" severity="info" size="small" text @click="openEditItem(data)" />
+                  <Button icon="pi pi-trash" severity="danger" size="small" text @click="confirmDeleteItem(data)" />
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+        </TabPanel>
 
-      <TabPanel header="Danh mục">
-        <div class="mb-4">
-          <Button label="Thêm danh mục" icon="pi pi-plus" @click="openAddCategory" />
-        </div>
+        <TabPanel value="1">
+          <div class="mb-4 mt-4">
+            <Button label="Thêm danh mục" icon="pi pi-plus" @click="openAddCategory" />
+          </div>
 
-        <DataTable :value="menuStore.categories" stripedRows>
-          <Column field="display_order" header="Thứ tự" sortable style="width: 100px" />
-          <Column field="name" header="Tên danh mục" sortable />
-          <Column field="icon" header="Icon" />
-          <Column header="Thao tác" style="width: 150px">
-            <template #body="{ data }">
-              <div class="flex gap-1">
-                <Button icon="pi pi-pencil" severity="info" size="small" text @click="openEditCategory(data)" />
-                <Button icon="pi pi-trash" severity="danger" size="small" text @click="deleteCategory(data)" />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
-      </TabPanel>
-    </TabView>
+          <DataTable :value="menuStore.categories" stripedRows>
+            <Column field="display_order" header="Thứ tự" sortable style="width: 100px" />
+            <Column field="name" header="Tên danh mục" sortable />
+            <Column field="icon" header="Icon" />
+            <Column header="Thao tác" style="width: 150px">
+              <template #body="{ data }">
+                <div class="flex gap-1">
+                  <Button icon="pi pi-pencil" severity="info" size="small" text @click="openEditCategory(data)" />
+                  <Button icon="pi pi-trash" severity="danger" size="small" text @click="deleteCategory(data)" />
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
 
     <Dialog v-model:visible="showItemDialog" :header="editingItem ? 'Sửa món' : 'Thêm món mới'" :style="{ width: '500px' }" modal>
       <div class="space-y-4">
