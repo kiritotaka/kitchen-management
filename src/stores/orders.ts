@@ -110,7 +110,7 @@ export const useOrderStore = defineStore('orders', () => {
 
   async function updateOrderItemStatus(id: string, status: OrderItemStatus) {
     try {
-      const updates: Partial<OrderItem> = { status }
+      const updates: Record<string, unknown> = { status }
       if (status === 'completed') {
         updates.completed_at = new Date().toISOString()
       }
@@ -120,17 +120,24 @@ export const useOrderStore = defineStore('orders', () => {
         .update(updates)
         .eq('id', id)
         .select()
-        .single()
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Update error:', updateError)
+        throw updateError
+      }
+      
+      if (!data || data.length === 0) {
+        throw new Error('Không có quyền cập nhật hoặc món không tồn tại')
+      }
       
       const index = orderItems.value.findIndex(item => item.id === id)
       if (index !== -1) {
-        orderItems.value[index] = { ...orderItems.value[index], ...data }
+        orderItems.value[index] = { ...orderItems.value[index], ...data[0] }
       }
       
-      return { success: true, data }
+      return { success: true, data: data[0] }
     } catch (e: unknown) {
+      console.error('updateOrderItemStatus error:', e)
       return { success: false, error: e instanceof Error ? e.message : 'Failed to update order item' }
     }
   }
