@@ -125,7 +125,7 @@ async function fetchData() {
       .eq('status', 'paid')
       .order('order_time', { ascending: false })
 
-    if (dateRange.value.length === 2) {
+    if (dateRange.value.length === 2 && dateRange.value[0] && dateRange.value[1]) {
       const start = dateRange.value[0].toISOString()
       const end = new Date(dateRange.value[1].getTime() + 86400000).toISOString()
       query = query.gte('order_time', start).lt('order_time', end)
@@ -134,7 +134,17 @@ async function fetchData() {
     const { data, error } = await query
 
     if (error) throw error
-    orders.value = data || []
+    
+    orders.value = (data || []).map((order: any) => ({
+      id: order.id,
+      order_time: order.order_time,
+      total_amount: order.total_amount,
+      status: order.status,
+      items: (order.items || []).map((item: any) => ({
+        quantity: item.quantity,
+        menu_item: Array.isArray(item.menu_item) ? item.menu_item[0] : item.menu_item
+      }))
+    }))
   } catch (e: unknown) {
     toast.add({ severity: 'error', summary: 'Lỗi', detail: e instanceof Error ? e.message : 'Không thể tải dữ liệu', life: 3000 })
   } finally {

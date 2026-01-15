@@ -282,8 +282,8 @@ async function submitOrder() {
           <DataTable v-else :value="orderItems" class="mb-4">
             <Column field="item.name" header="Món" />
             <Column header="SL" style="width: 100px">
-              <template #body="{ data, index }">
-                <InputNumber v-model="orderItems[index].quantity" :min="1" :max="99" showButtons buttonLayout="horizontal" class="w-24" />
+              <template #body="{ data }">
+                <InputNumber v-model="data.quantity" :min="1" :max="99" showButtons buttonLayout="horizontal" class="w-24" />
               </template>
             </Column>
             <Column header="Giá" style="width: 120px">

@@ -161,12 +161,12 @@ async function saveItem() {
   
   const data = {
     name: itemForm.value.name,
-    description: itemForm.value.description || null,
+    description: itemForm.value.description || undefined,
     price: itemForm.value.price,
-    category_id: itemForm.value.category_id || null,
-    image_url: itemForm.value.image_url || null,
+    category_id: itemForm.value.category_id || undefined,
+    image_url: itemForm.value.image_url || undefined,
     is_available: itemForm.value.is_available,
-    badges: badgesArray.length > 0 ? badgesArray : null
+    badges: badgesArray.length > 0 ? badgesArray : undefined
   }
 
   try {

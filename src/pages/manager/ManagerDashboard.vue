@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useTableStore } from '@/stores/tables'
 import { useOrderStore } from '@/stores/orders'
 import { useToast } from 'primevue/usetoast'
@@ -39,10 +39,6 @@ onMounted(async () => {
   ])
 })
 
-const tableOrder = computed(() => {
-  if (!selectedTable.value?.current_order_id) return null
-  return orderStore.orders.find(o => o.id === selectedTable.value?.current_order_id) || null
-})
 
 function getStatusColor(status: string) {
   switch (status) {
