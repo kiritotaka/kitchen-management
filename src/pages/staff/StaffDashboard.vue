@@ -5,6 +5,7 @@ import { useMenuStore } from '@/stores/menu'
 import { useOrderStore } from '@/stores/orders'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'primevue/usetoast'
+import { supabase } from '@/services/supabase'
 import type { Table, MenuItem } from '@/types'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -65,11 +66,43 @@ function getStatusLabel(status: string) {
   }
 }
 
-function selectTable(table: Table) {
+const existingOrderItems = ref<{ id: string; menu_item: MenuItem; quantity: number; status: string }[]>([])
+const loadingExistingOrder = ref(false)
+
+async function selectTable(table: Table) {
   selectedTable.value = table
   orderItems.value = []
   orderNotes.value = ''
+  existingOrderItems.value = []
   showOrderDialog.value = true
+  
+  if (table.status === 'serving' && table.current_order_id) {
+    loadingExistingOrder.value = true
+    try {
+      const { data, error } = await supabase
+        .from('order_items')
+        .select(`
+          id,
+          quantity,
+          status,
+          menu_item:menu_items(*)
+        `)
+        .eq('order_id', table.current_order_id)
+      
+      if (!error && data) {
+        existingOrderItems.value = data.map(item => ({
+          id: item.id,
+          menu_item: item.menu_item as unknown as MenuItem,
+          quantity: item.quantity,
+          status: item.status
+        }))
+      }
+    } catch (e) {
+      console.error('Error loading existing order:', e)
+    } finally {
+      loadingExistingOrder.value = false
+    }
+  }
 }
 
 function addItem(item: MenuItem) {
@@ -96,26 +129,47 @@ async function submitOrder() {
   }
 
   submitting.value = true
-  const items = orderItems.value.map(oi => ({
-    menu_item_id: oi.item.id,
-    quantity: oi.quantity
-  }))
+  
+  try {
+    if (selectedTable.value.status === 'serving' && selectedTable.value.current_order_id) {
+      const orderItemsToInsert = orderItems.value.map(oi => ({
+        order_id: selectedTable.value!.current_order_id,
+        menu_item_id: oi.item.id,
+        quantity: oi.quantity,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      }))
 
-  const result = await orderStore.createOrder(
-    selectedTable.value.id,
-    authStore.user!.id,
-    items,
-    orderNotes.value || undefined
-  )
+      const { error } = await supabase
+        .from('order_items')
+        .insert(orderItemsToInsert)
 
-  submitting.value = false
+      if (error) throw error
 
-  if (result.success) {
-    toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã gửi order đến bếp', life: 3000 })
+      toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã thêm món vào order', life: 3000 })
+    } else {
+      const items = orderItems.value.map(oi => ({
+        menu_item_id: oi.item.id,
+        quantity: oi.quantity
+      }))
+
+      const result = await orderStore.createOrder(
+        selectedTable.value.id,
+        authStore.user!.id,
+        items,
+        orderNotes.value || undefined
+      )
+
+      if (!result.success) throw new Error(result.error)
+      toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã gửi order đến bếp', life: 3000 })
+    }
+    
     showOrderDialog.value = false
     await tableStore.fetchTables()
-  } else {
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: result.error, life: 3000 })
+  } catch (e: unknown) {
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e instanceof Error ? e.message : 'Thao tác thất bại', life: 3000 })
+  } finally {
+    submitting.value = false
   }
 }
 </script>
@@ -196,10 +250,34 @@ async function submitOrder() {
         </div>
 
         <div>
-          <h3 class="font-semibold mb-3">Món đã chọn</h3>
+          <div v-if="selectedTable?.status === 'serving'" class="mb-4">
+            <h3 class="font-semibold mb-3 text-orange-600">Món đang phục vụ</h3>
+            <div v-if="loadingExistingOrder" class="text-center py-4">
+              <i class="pi pi-spin pi-spinner text-2xl text-orange-500"></i>
+            </div>
+            <div v-else-if="existingOrderItems.length === 0" class="text-center py-4 text-gray-500 text-sm">
+              Không có món nào
+            </div>
+            <div v-else class="space-y-2 max-h-40 overflow-y-auto mb-4">
+              <div v-for="item in existingOrderItems" :key="item.id" class="flex items-center justify-between p-2 bg-orange-50 rounded">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">{{ item.menu_item?.name }}</span>
+                  <span class="text-orange-600 font-bold">x{{ item.quantity }}</span>
+                </div>
+                <Tag 
+                  :value="item.status === 'pending' ? 'Chờ' : item.status === 'cooking' ? 'Đang làm' : 'Xong'" 
+                  :severity="item.status === 'pending' ? 'danger' : item.status === 'cooking' ? 'warning' : 'success'" 
+                  size="small"
+                />
+              </div>
+            </div>
+            <hr class="my-3" />
+          </div>
+          
+          <h3 class="font-semibold mb-3">Thêm món mới</h3>
           <div v-if="orderItems.length === 0" class="text-center py-8 text-gray-500">
             <i class="pi pi-shopping-cart text-4xl mb-2"></i>
-            <p>Chưa có món nào</p>
+            <p>Chưa chọn món nào</p>
           </div>
           <DataTable v-else :value="orderItems" class="mb-4">
             <Column field="item.name" header="Món" />
@@ -228,7 +306,7 @@ async function submitOrder() {
           </div>
 
           <Button 
-            label="Xác nhận Order" 
+            :label="selectedTable?.status === 'serving' ? 'Thêm món' : 'Xác nhận Order'" 
             icon="pi pi-check" 
             class="w-full mt-4"
             :loading="submitting"
