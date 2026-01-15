@@ -109,7 +109,10 @@ async function onImageSelect(event: { files: File[] }) {
       .from('menu-images')
       .upload(filePath, file)
 
-    if (uploadError) throw uploadError
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      throw new Error(uploadError.message || 'Không thể upload hình. Vui lòng kiểm tra bucket "menu-images" đã được tạo và cấu hình public.')
+    }
 
     const { data } = supabase.storage
       .from('menu-images')
@@ -117,10 +120,12 @@ async function onImageSelect(event: { files: File[] }) {
 
     itemForm.value.image_url = data.publicUrl
     imagePreview.value = data.publicUrl
+    console.log('Image uploaded:', data.publicUrl)
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã tải hình ảnh lên', life: 3000 })
   } catch (e: unknown) {
+    console.error('onImageSelect error:', e)
     imagePreview.value = null
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e instanceof Error ? e.message : 'Upload thất bại', life: 3000 })
+    toast.add({ severity: 'error', summary: 'Lỗi upload', detail: e instanceof Error ? e.message : 'Upload thất bại', life: 5000 })
   } finally {
     uploading.value = false
   }
