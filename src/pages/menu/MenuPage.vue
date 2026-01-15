@@ -11,10 +11,8 @@ const menuStore = useMenuStore()
 const searchInput = ref('')
 
 onMounted(async () => {
-  await Promise.all([
-    menuStore.fetchCategories(),
-    menuStore.fetchMenuItems()
-  ])
+  await menuStore.fetchCategories()
+  await menuStore.fetchMenuItems()
 })
 
 function selectCategory(categoryId: string | null) {

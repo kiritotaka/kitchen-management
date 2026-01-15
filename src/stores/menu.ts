@@ -48,16 +48,22 @@ export const useMenuStore = defineStore('menu', () => {
     try {
       const { data, error: fetchError } = await supabase
         .from('menu_items')
-        .select(`
-          *,
-          category:categories(*)
-        `)
+        .select('*')
+        .eq('is_available', true)
         .order('name')
 
       if (fetchError) throw fetchError
-      menuItems.value = data || []
+      
+      // Map category names from categories store
+      const items = (data || []).map(item => {
+        const cat = categories.value.find(c => c.id === item.category_id)
+        return { ...item, category: cat || null }
+      })
+      
+      menuItems.value = items
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch menu items'
+      console.error('Menu fetch error:', e)
     } finally {
       loading.value = false
     }
