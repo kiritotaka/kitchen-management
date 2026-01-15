@@ -95,7 +95,9 @@ async function onImageSelect(event: { files: File[] }) {
 
   const reader = new FileReader()
   reader.onload = (e) => {
-    imagePreview.value = e.target?.result as string
+    const dataUrl = e.target?.result as string
+    imagePreview.value = dataUrl
+    itemForm.value.image_url = dataUrl
   }
   reader.readAsDataURL(file)
 
@@ -111,7 +113,13 @@ async function onImageSelect(event: { files: File[] }) {
 
     if (uploadError) {
       console.error('Upload error:', uploadError)
-      throw new Error(uploadError.message || 'Không thể upload hình. Vui lòng kiểm tra bucket "menu-images" đã được tạo và cấu hình public.')
+      toast.add({ 
+        severity: 'warn', 
+        summary: 'Lưu ý', 
+        detail: 'Không thể upload lên Storage. Hình ảnh sẽ được lưu dạng base64.', 
+        life: 5000 
+      })
+      return
     }
 
     const { data } = supabase.storage
@@ -120,12 +128,15 @@ async function onImageSelect(event: { files: File[] }) {
 
     itemForm.value.image_url = data.publicUrl
     imagePreview.value = data.publicUrl
-    console.log('Image uploaded:', data.publicUrl)
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã tải hình ảnh lên', life: 3000 })
   } catch (e: unknown) {
     console.error('onImageSelect error:', e)
-    imagePreview.value = null
-    toast.add({ severity: 'error', summary: 'Lỗi upload', detail: e instanceof Error ? e.message : 'Upload thất bại', life: 5000 })
+    toast.add({ 
+      severity: 'warn', 
+      summary: 'Lưu ý', 
+      detail: 'Upload Storage thất bại. Hình ảnh sẽ được lưu dạng base64.', 
+      life: 5000 
+    })
   } finally {
     uploading.value = false
   }
