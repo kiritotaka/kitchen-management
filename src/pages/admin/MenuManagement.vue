@@ -93,6 +93,12 @@ async function onImageSelect(event: { files: File[] }) {
   const file = event.files[0]
   if (!file) return
 
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
+
   uploading.value = true
   try {
     const fileExt = file.name.split('.').pop()
@@ -113,6 +119,7 @@ async function onImageSelect(event: { files: File[] }) {
     imagePreview.value = data.publicUrl
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã tải hình ảnh lên', life: 3000 })
   } catch (e: unknown) {
+    imagePreview.value = null
     toast.add({ severity: 'error', summary: 'Lỗi', detail: e instanceof Error ? e.message : 'Upload thất bại', life: 3000 })
   } finally {
     uploading.value = false
@@ -361,9 +368,17 @@ async function deleteCategory(category: Category) {
         </div>
         <div class="flex flex-col gap-2">
           <label class="font-medium">Hình ảnh</label>
-          <div v-if="imagePreview" class="relative inline-block mb-2">
-            <img :src="imagePreview" class="w-32 h-32 object-cover rounded border" />
+          <div class="relative inline-block mb-2">
+            <img 
+              :src="imagePreview || 'https://placehold.co/128x128/f97316/white?text=Chưa+có+ảnh'" 
+              class="w-32 h-32 object-cover rounded border"
+              :class="{ 'opacity-50': uploading }"
+            />
+            <div v-if="uploading" class="absolute inset-0 flex items-center justify-center">
+              <i class="pi pi-spin pi-spinner text-2xl text-orange-600"></i>
+            </div>
             <Button 
+              v-if="imagePreview"
               icon="pi pi-times" 
               severity="danger" 
               size="small" 
