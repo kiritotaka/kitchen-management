@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Button from 'primevue/button'
@@ -7,7 +7,6 @@ import Menubar from 'primevue/menubar'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const loggingOut = ref(false)
 
 const menuItems = computed(() => {
   const items = [
@@ -32,10 +31,8 @@ const menuItems = computed(() => {
   return items
 })
 
-async function handleLogout() {
-  loggingOut.value = true
-  await authStore.logout()
-  loggingOut.value = false
+function handleLogout() {
+  authStore.logout()
   router.push('/menu')
 }
 </script>
@@ -67,7 +64,6 @@ async function handleLogout() {
                 icon="pi pi-sign-out" 
                 severity="secondary" 
                 size="small"
-                :loading="loggingOut"
                 @click="handleLogout" 
               />
             </template>

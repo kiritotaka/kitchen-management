@@ -6,6 +6,7 @@ import type { User, UserRole } from '@/types'
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const loading = ref(false)
+  const loggingOut = ref(false)
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!user.value)
@@ -45,15 +46,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    loading.value = true
-    try {
-      await supabase.auth.signOut()
-      user.value = null
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Logout failed'
-    } finally {
-      loading.value = false
-    }
+    loggingOut.value = true
+    user.value = null
+    supabase.auth.signOut().catch(() => {})
+    loggingOut.value = false
   }
 
   async function checkAuth() {
@@ -95,6 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     loading,
+    loggingOut,
     error,
     isAuthenticated,
     userRole,
