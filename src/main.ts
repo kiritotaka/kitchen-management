@@ -7,6 +7,7 @@ import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import App from './App.vue'
 import router from './router'
+import { supabase } from './services/supabase'
 import './assets/main.css'
 
 const app = createApp(App)
@@ -29,4 +30,22 @@ app.use(PrimeVue, {
 app.use(ToastService)
 app.use(ConfirmationService)
 
-app.mount('#app')
+import { useAuthStore } from './stores/auth'
+
+async function initApp() {
+  const authStore = useAuthStore()
+  
+  await authStore.checkAuth()
+  
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      await authStore.checkAuth()
+    } else if (event === 'SIGNED_OUT') {
+      authStore.user = null
+    }
+  })
+  
+  app.mount('#app')
+}
+
+initApp()
