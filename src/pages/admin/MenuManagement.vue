@@ -169,21 +169,27 @@ async function saveItem() {
     badges: badgesArray.length > 0 ? badgesArray : null
   }
 
-  let result
-  if (editingItem.value) {
-    result = await menuStore.updateMenuItem(editingItem.value.id, data)
-  } else {
-    result = await menuStore.addMenuItem(data)
-  }
+  try {
+    let result
+    if (editingItem.value) {
+      result = await menuStore.updateMenuItem(editingItem.value.id, data)
+    } else {
+      result = await menuStore.addMenuItem(data)
+    }
 
-  processing.value = false
-
-  if (result.success) {
-    toast.add({ severity: 'success', summary: 'Thành công', detail: editingItem.value ? 'Đã cập nhật món' : 'Đã thêm món mới', life: 3000 })
-    showItemDialog.value = false
-    await menuStore.fetchMenuItems(true)
-  } else {
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: result.error, life: 3000 })
+    if (result.success) {
+      toast.add({ severity: 'success', summary: 'Thành công', detail: editingItem.value ? 'Đã cập nhật món' : 'Đã thêm món mới', life: 3000 })
+      showItemDialog.value = false
+      await menuStore.fetchMenuItems(true)
+    } else {
+      console.error('Save item error:', result.error)
+      toast.add({ severity: 'error', summary: 'Lỗi', detail: result.error, life: 5000 })
+    }
+  } catch (e) {
+    console.error('saveItem exception:', e)
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: 'Không thể lưu món ăn', life: 5000 })
+  } finally {
+    processing.value = false
   }
 }
 
