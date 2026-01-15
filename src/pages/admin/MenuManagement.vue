@@ -56,7 +56,7 @@ const badgeOptions = [
 onMounted(async () => {
   await Promise.all([
     menuStore.fetchCategories(),
-    menuStore.fetchMenuItems()
+    menuStore.fetchMenuItems(true)
   ])
 })
 
@@ -151,7 +151,7 @@ async function saveItem() {
   if (result.success) {
     toast.add({ severity: 'success', summary: 'Thành công', detail: editingItem.value ? 'Đã cập nhật món' : 'Đã thêm món mới', life: 3000 })
     showItemDialog.value = false
-    await menuStore.fetchMenuItems()
+    await menuStore.fetchMenuItems(true)
   } else {
     toast.add({ severity: 'error', summary: 'Lỗi', detail: result.error, life: 3000 })
   }

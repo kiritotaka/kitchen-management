@@ -43,18 +43,22 @@ export const useMenuStore = defineStore('menu', () => {
     }
   }
 
-  async function fetchMenuItems() {
+  async function fetchMenuItems(includeUnavailable = false) {
     loading.value = true
     try {
-      const { data, error: fetchError } = await supabase
+      let query = supabase
         .from('menu_items')
         .select('*')
-        .eq('is_available', true)
         .order('name')
+      
+      if (!includeUnavailable) {
+        query = query.eq('is_available', true)
+      }
+
+      const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
       
-      // Map category names from categories store
       const items = (data || []).map(item => {
         const cat = categories.value.find(c => c.id === item.category_id)
         return { ...item, category: cat || null }
