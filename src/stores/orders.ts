@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { supabase } from "@/services/supabase";
+import { supabase, ensureSession } from "@/services/supabase";
 import type { Order, OrderItem, OrderItemStatus } from "@/types";
 
 export const useOrderStore = defineStore("orders", () => {

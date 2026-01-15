@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '@/services/supabase'
+import { supabase, ensureSession } from '@/services/supabase'
 import type { MenuItem, Category } from '@/types'
 
 export const useMenuStore = defineStore('menu', () => {
@@ -75,6 +75,7 @@ export const useMenuStore = defineStore('menu', () => {
 
   async function addMenuItem(item: Partial<MenuItem>) {
     try {
+      await ensureSession()
       const { data, error: insertError } = await supabase
         .from('menu_items')
         .insert(item)
@@ -91,6 +92,7 @@ export const useMenuStore = defineStore('menu', () => {
 
   async function updateMenuItem(id: string, updates: Partial<MenuItem>) {
     try {
+      await ensureSession()
       const { data, error: updateError } = await supabase
         .from('menu_items')
         .update(updates)
@@ -111,6 +113,7 @@ export const useMenuStore = defineStore('menu', () => {
 
   async function deleteMenuItem(id: string) {
     try {
+      await ensureSession()
       const { error: deleteError } = await supabase
         .from('menu_items')
         .delete()

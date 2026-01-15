@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { supabase } from '@/services/supabase'
+import { supabase, ensureSession } from '@/services/supabase'
 import type { Table, TableStatus } from '@/types'
 
 export const useTableStore = defineStore('tables', () => {
