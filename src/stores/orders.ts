@@ -22,8 +22,8 @@ export const useOrderStore = defineStore('orders', () => {
         .from('orders')
         .select(`
           *,
-          table:tables(*),
-          staff:users(*),
+          table:tables!orders_table_id_fkey(*),
+          staff:app_users(*),
           items:order_items(
             *,
             menu_item:menu_items(*)
@@ -50,7 +50,7 @@ export const useOrderStore = defineStore('orders', () => {
           menu_item:menu_items(*),
           order:orders(
             *,
-            table:tables(*)
+            table:tables!orders_table_id_fkey(*)
           )
         `)
         .order('created_at', { ascending: true })
@@ -143,7 +143,7 @@ export const useOrderStore = defineStore('orders', () => {
         .eq('id', orderId)
         .select(`
           *,
-          table:tables(*),
+          table:tables!orders_table_id_fkey(*),
           items:order_items(
             *,
             menu_item:menu_items(*)
