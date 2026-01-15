@@ -155,6 +155,10 @@ async function saveItem() {
 
   processing.value = true
   
+  const badgesArray = Array.isArray(itemForm.value.badges) 
+    ? itemForm.value.badges 
+    : itemForm.value.badges ? [itemForm.value.badges] : []
+  
   const data = {
     name: itemForm.value.name,
     description: itemForm.value.description || null,
@@ -162,7 +166,7 @@ async function saveItem() {
     category_id: itemForm.value.category_id || null,
     image_url: itemForm.value.image_url || null,
     is_available: itemForm.value.is_available,
-    badges: itemForm.value.badges.length > 0 ? itemForm.value.badges : null
+    badges: badgesArray.length > 0 ? badgesArray : null
   }
 
   let result
