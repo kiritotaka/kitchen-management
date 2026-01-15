@@ -16,6 +16,7 @@ import InputSwitch from 'primevue/inputswitch'
 import Tag from 'primevue/tag'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
+import FileUpload from 'primevue/fileupload'
 import { supabase } from '@/services/supabase'
 
 const menuStore = useMenuStore()
@@ -27,6 +28,8 @@ const showCategoryDialog = ref(false)
 const editingItem = ref<MenuItem | null>(null)
 const editingCategory = ref<Category | null>(null)
 const processing = ref(false)
+const uploading = ref(false)
+const imagePreview = ref<string | null>(null)
 
 const itemForm = ref({
   name: '',
@@ -64,6 +67,7 @@ function formatPrice(price: number) {
 function openAddItem() {
   editingItem.value = null
   itemForm.value = { name: '', description: '', price: 0, category_id: '', image_url: '', is_available: true, badges: [] }
+  imagePreview.value = null
   showItemDialog.value = true
 }
 
@@ -78,7 +82,43 @@ function openEditItem(item: MenuItem) {
     is_available: item.is_available,
     badges: item.badges || []
   }
+  imagePreview.value = item.image_url || null
   showItemDialog.value = true
+}
+
+async function onImageSelect(event: { files: File[] }) {
+  const file = event.files[0]
+  if (!file) return
+
+  uploading.value = true
+  try {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+    const filePath = `menu/${fileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('menu-images')
+      .upload(filePath, file)
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage
+      .from('menu-images')
+      .getPublicUrl(filePath)
+
+    itemForm.value.image_url = data.publicUrl
+    imagePreview.value = data.publicUrl
+    toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã tải hình ảnh lên', life: 3000 })
+  } catch (e: unknown) {
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e instanceof Error ? e.message : 'Upload thất bại', life: 3000 })
+  } finally {
+    uploading.value = false
+  }
+}
+
+function removeImage() {
+  itemForm.value.image_url = ''
+  imagePreview.value = null
 }
 
 async function saveItem() {
@@ -311,8 +351,30 @@ async function deleteCategory(category: Category) {
           <Dropdown v-model="itemForm.category_id" :options="menuStore.categories" optionLabel="name" optionValue="id" placeholder="Chọn danh mục" class="w-full" />
         </div>
         <div class="flex flex-col gap-2">
-          <label class="font-medium">URL Hình ảnh</label>
-          <InputText v-model="itemForm.image_url" placeholder="https://..." class="w-full" />
+          <label class="font-medium">Hình ảnh</label>
+          <div v-if="imagePreview" class="relative inline-block mb-2">
+            <img :src="imagePreview" class="w-32 h-32 object-cover rounded border" />
+            <Button 
+              icon="pi pi-times" 
+              severity="danger" 
+              size="small" 
+              rounded 
+              class="absolute -top-2 -right-2"
+              @click="removeImage"
+            />
+          </div>
+          <FileUpload 
+            mode="basic" 
+            accept="image/*" 
+            :maxFileSize="5000000"
+            chooseLabel="Chọn hình ảnh"
+            :auto="true"
+            :disabled="uploading"
+            customUpload
+            @select="onImageSelect"
+          />
+          <small class="text-gray-500">Hoặc nhập URL:</small>
+          <InputText v-model="itemForm.image_url" placeholder="https://..." class="w-full" @input="imagePreview = itemForm.image_url" />
         </div>
         <div class="flex flex-col gap-2">
           <label class="font-medium">Badges</label>
