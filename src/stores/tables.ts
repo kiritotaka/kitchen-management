@@ -27,6 +27,7 @@ export const useTableStore = defineStore('tables', () => {
 
   async function updateTableStatus(id: string, status: TableStatus, orderId?: string) {
     try {
+      await ensureSession()
       const updates: Partial<Table> = {
         status,
         updated_at: new Date().toISOString()
@@ -55,6 +56,7 @@ export const useTableStore = defineStore('tables', () => {
 
   async function addTable(table: Partial<Table>) {
     try {
+      await ensureSession()
       const { data, error: insertError } = await supabase
         .from('tables')
         .insert(table)
@@ -71,6 +73,7 @@ export const useTableStore = defineStore('tables', () => {
 
   async function deleteTable(id: string) {
     try {
+      await ensureSession()
       const { error: deleteError } = await supabase
         .from('tables')
         .delete()

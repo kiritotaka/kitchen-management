@@ -79,6 +79,7 @@ export const useOrderStore = defineStore("orders", () => {
     notes?: string,
   ) {
     try {
+      await ensureSession();
       const totalAmount = 0;
 
       const { data: order, error: orderError } = await supabase
@@ -126,6 +127,7 @@ export const useOrderStore = defineStore("orders", () => {
 
   async function updateOrderItemStatus(id: string, status: OrderItemStatus) {
     try {
+      await ensureSession();
       const updates: Record<string, unknown> = { status };
       if (status === "completed") {
         updates.completed_at = new Date().toISOString();
@@ -163,6 +165,7 @@ export const useOrderStore = defineStore("orders", () => {
 
   async function completeOrder(orderId: string, totalAmount: number) {
     try {
+      await ensureSession();
       const { data, error: updateError } = await supabase
         .from("orders")
         .update({ status: "paid", total_amount: totalAmount })
