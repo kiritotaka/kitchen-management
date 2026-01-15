@@ -1,185 +1,222 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { supabase } from '@/services/supabase'
-import type { Order, OrderItem, OrderItemStatus } from '@/types'
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { supabase } from "@/services/supabase";
+import type { Order, OrderItem, OrderItemStatus } from "@/types";
 
-export const useOrderStore = defineStore('orders', () => {
-  const orders = ref<Order[]>([])
-  const orderItems = ref<OrderItem[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+export const useOrderStore = defineStore("orders", () => {
+  const orders = ref<Order[]>([]);
+  const orderItems = ref<OrderItem[]>([]);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
 
   const pendingOrderItems = computed(() => {
     return orderItems.value
-      .filter(item => item.status !== 'completed')
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-  })
+      .filter((item) => item.status !== "completed")
+      .sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      );
+  });
 
   async function fetchOrders() {
-    loading.value = true
+    loading.value = true;
     try {
       const { data, error: fetchError } = await supabase
-        .from('orders')
-        .select(`
+        .from("orders")
+        .select(
+          `
           *,
           table:tables!orders_table_id_fkey(*),
-          staff:app_users(*),
+          staff:users(*),
           items:order_items(
             *,
             menu_item:menu_items(*)
           )
-        `)
-        .order('order_time', { ascending: false })
+        `,
+        )
+        .order("order_time", { ascending: false });
 
-      if (fetchError) throw fetchError
-      orders.value = data || []
+      if (fetchError) throw fetchError;
+      orders.value = data || [];
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch orders'
+      error.value = e instanceof Error ? e.message : "Failed to fetch orders";
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
   async function fetchOrderItems() {
-    loading.value = true
+    loading.value = true;
     try {
       const { data, error: fetchError } = await supabase
-        .from('order_items')
-        .select(`
+        .from("order_items")
+        .select(
+          `
           *,
           menu_item:menu_items(*),
           order:orders(
             *,
             table:tables!orders_table_id_fkey(*)
           )
-        `)
-        .order('created_at', { ascending: true })
+        `,
+        )
+        .order("created_at", { ascending: true });
 
-      if (fetchError) throw fetchError
-      orderItems.value = data || []
+      if (fetchError) throw fetchError;
+      orderItems.value = data || [];
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch order items'
+      error.value =
+        e instanceof Error ? e.message : "Failed to fetch order items";
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   }
 
-  async function createOrder(tableId: string, staffId: string, items: { menu_item_id: string; quantity: number }[], notes?: string) {
+  async function createOrder(
+    tableId: string,
+    staffId: string,
+    items: { menu_item_id: string; quantity: number }[],
+    notes?: string,
+  ) {
     try {
-      const totalAmount = 0
+      const totalAmount = 0;
 
       const { data: order, error: orderError } = await supabase
-        .from('orders')
+        .from("orders")
         .insert({
           table_id: tableId,
           staff_id: staffId,
           order_time: new Date().toISOString(),
-          status: 'pending',
+          status: "pending",
           total_amount: totalAmount,
-          notes
+          notes,
         })
         .select()
-        .single()
+        .single();
 
-      if (orderError) throw orderError
+      if (orderError) throw orderError;
 
-      const orderItemsToInsert = items.map(item => ({
+      const orderItemsToInsert = items.map((item) => ({
         order_id: order.id,
         menu_item_id: item.menu_item_id,
         quantity: item.quantity,
-        status: 'pending' as OrderItemStatus,
-        created_at: new Date().toISOString()
-      }))
+        status: "pending" as OrderItemStatus,
+        created_at: new Date().toISOString(),
+      }));
 
       const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItemsToInsert)
+        .from("order_items")
+        .insert(orderItemsToInsert);
 
-      if (itemsError) throw itemsError
+      if (itemsError) throw itemsError;
 
       await supabase
-        .from('tables')
-        .update({ status: 'serving', current_order_id: order.id })
-        .eq('id', tableId)
+        .from("tables")
+        .update({ status: "serving", current_order_id: order.id })
+        .eq("id", tableId);
 
-      return { success: true, data: order }
+      return { success: true, data: order };
     } catch (e: unknown) {
-      return { success: false, error: e instanceof Error ? e.message : 'Failed to create order' }
+      return {
+        success: false,
+        error: e instanceof Error ? e.message : "Failed to create order",
+      };
     }
   }
 
   async function updateOrderItemStatus(id: string, status: OrderItemStatus) {
     try {
-      const updates: Record<string, unknown> = { status }
-      if (status === 'completed') {
-        updates.completed_at = new Date().toISOString()
+      const updates: Record<string, unknown> = { status };
+      if (status === "completed") {
+        updates.completed_at = new Date().toISOString();
       }
 
       const { data, error: updateError } = await supabase
-        .from('order_items')
+        .from("order_items")
         .update(updates)
-        .eq('id', id)
-        .select()
+        .eq("id", id)
+        .select();
 
       if (updateError) {
-        console.error('Update error:', updateError)
-        throw updateError
+        console.error("Update error:", updateError);
+        throw updateError;
       }
-      
+
       if (!data || data.length === 0) {
-        throw new Error('Không có quyền cập nhật hoặc món không tồn tại')
+        throw new Error("Không có quyền cập nhật hoặc món không tồn tại");
       }
-      
-      const index = orderItems.value.findIndex(item => item.id === id)
+
+      const index = orderItems.value.findIndex((item) => item.id === id);
       if (index !== -1) {
-        orderItems.value[index] = { ...orderItems.value[index], ...data[0] }
+        orderItems.value[index] = { ...orderItems.value[index], ...data[0] };
       }
-      
-      return { success: true, data: data[0] }
+
+      return { success: true, data: data[0] };
     } catch (e: unknown) {
-      console.error('updateOrderItemStatus error:', e)
-      return { success: false, error: e instanceof Error ? e.message : 'Failed to update order item' }
+      console.error("updateOrderItemStatus error:", e);
+      return {
+        success: false,
+        error: e instanceof Error ? e.message : "Failed to update order item",
+      };
     }
   }
 
   async function completeOrder(orderId: string, totalAmount: number) {
     try {
       const { data, error: updateError } = await supabase
-        .from('orders')
-        .update({ status: 'paid', total_amount: totalAmount })
-        .eq('id', orderId)
-        .select(`
+        .from("orders")
+        .update({ status: "paid", total_amount: totalAmount })
+        .eq("id", orderId)
+        .select(
+          `
           *,
           table:tables!orders_table_id_fkey(*),
           items:order_items(
             *,
             menu_item:menu_items(*)
           )
-        `)
-        .single()
+        `,
+        );
 
-      if (updateError) throw updateError
-
-      if (data.table_id) {
-        await supabase
-          .from('tables')
-          .update({ status: 'available', current_order_id: null })
-          .eq('id', data.table_id)
+      if (updateError) {
+        console.error("Complete order error:", updateError);
+        throw updateError;
       }
 
-      return { success: true, data }
+      if (!data || data.length === 0) {
+        throw new Error("Không có quyền thanh toán hoặc đơn hàng không tồn tại");
+      }
+
+      const orderData = data[0];
+
+      if (orderData.table_id) {
+        await supabase
+          .from("tables")
+          .update({ status: "available", current_order_id: null })
+          .eq("id", orderData.table_id);
+      }
+
+      return { success: true, data: orderData };
     } catch (e: unknown) {
-      return { success: false, error: e instanceof Error ? e.message : 'Failed to complete order' }
+      console.error("completeOrder error:", e);
+      return {
+        success: false,
+        error: e instanceof Error ? e.message : "Failed to complete order",
+      };
     }
   }
 
   function subscribeToOrderItems() {
     return supabase
-      .channel('order-items-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, async () => {
-        await fetchOrderItems()
-      })
-      .subscribe()
+      .channel("order-items-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_items" },
+        async () => {
+          await fetchOrderItems();
+        },
+      )
+      .subscribe();
   }
 
   return {
@@ -193,6 +230,6 @@ export const useOrderStore = defineStore('orders', () => {
     createOrder,
     updateOrderItemStatus,
     completeOrder,
-    subscribeToOrderItems
-  }
-})
+    subscribeToOrderItems,
+  };
+});

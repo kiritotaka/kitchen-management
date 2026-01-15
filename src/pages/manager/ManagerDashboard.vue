@@ -76,6 +76,21 @@ async function selectTable(table: Table) {
   if (table.status === 'serving' && table.current_order_id) {
     await orderStore.fetchOrders()
     currentOrder.value = orderStore.orders.find(o => o.id === table.current_order_id) || null
+    
+    if (!currentOrder.value) {
+      const { data } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          table:tables!orders_table_id_fkey(*),
+          items:order_items(*, menu_item:menu_items(*))
+        `)
+        .eq('id', table.current_order_id)
+        .single()
+      
+      currentOrder.value = data
+    }
+    
     showPaymentDialog.value = true
   } else if (table.status === 'available') {
     showReservationDialog.value = true
