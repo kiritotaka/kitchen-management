@@ -72,4 +72,10 @@ npm run dev
 ```
 
 ## Cập nhật gần đây
+- 2026-01-15: Thêm chức năng upload hình ảnh món ăn với Supabase Storage
+- 2026-01-15: Sửa lỗi RLS policies gây infinite recursion
 - 2026-01-15: Khởi tạo dự án với đầy đủ tính năng MVP
+
+## Supabase Storage
+- Bucket: `menu-images` (public)
+- Dùng để lưu hình ảnh món ăn upload từ admin
