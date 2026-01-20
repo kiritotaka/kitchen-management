@@ -43,10 +43,10 @@ function handleLogout() {
       <div class="max-w-7xl mx-auto px-4">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-4">
-            <h1 class="text-xl font-bold text-orange-600 cursor-pointer" @click="router.push('/')">
+            <div class="text-xl font-bold text-orange-600 cursor-pointer" @click="router.push('/')">
               <i class="pi pi-star-fill mr-2"></i>
-              Quán Ăn
-            </h1>
+              2S Foods
+            </div>
             <Menubar :model="menuItems" class="border-0 bg-transparent" />
           </div>
           
@@ -54,7 +54,6 @@ function handleLogout() {
             <template v-if="authStore.isAuthenticated">
               <span class="text-sm text-gray-600">
                 <i class="pi pi-user mr-1"></i>
-                {{ authStore.user?.full_name }}
                 <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded ml-2">
                   {{ authStore.userRole }}
                 </span>
